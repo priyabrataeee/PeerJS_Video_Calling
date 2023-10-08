@@ -33,7 +33,4 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         BRANCH: gh-pages # Specify the branch to deploy to (e.g., gh-pages)
         FOLDER: dist/video-chat-app # The folder the action should deploy
-      retry:
-        max-tries: 3 # You can adjust the number of retries as needed
-        backoff-strategy: [matrix(5000, 30000)] # Adjust the retry delay if necessary
 
