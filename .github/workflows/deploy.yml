@@ -24,10 +24,11 @@ jobs:
     - name: Build Angular app
       run: npm run build --configuration=production
 
-    - name: Set up Git
-      run: |
-      git config --global user.name "Priyabrata"
-      git config --global user.email "priyabrataeee@gmail.com"
+    - name: Set up Git name
+      run: git config --global user.name "Priyabrata"
+    
+    -name: Set up Git email
+      run: git config --global user.email "priyabrataeee@gmail.com"
 
     - name: Deploy to GitHub Pages
       uses: JamesIves/github-pages-deploy-action@4.1.4
