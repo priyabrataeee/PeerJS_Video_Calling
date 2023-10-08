@@ -25,7 +25,7 @@ jobs:
       run: npm run build --configuration=production
 
     - name: Set up Git name
-      run: git config --global user.name "Priyabrata"
+      run: git config --global user.name "priyabrataeee"
     
     -name: Set up Git email
       run: git config --global user.email "priyabrataeee@gmail.com"
