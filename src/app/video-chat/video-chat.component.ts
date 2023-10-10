@@ -1,6 +1,6 @@
 // video-chat.component.ts
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import Peer from 'peerjs';
+import { Peer, MediaConnection } from 'peerjs';
 
 @Component({
   selector: 'app-video-chat',
@@ -8,60 +8,73 @@ import Peer from 'peerjs';
   styleUrls: ['./video-chat.component.css'],
 })
 export class VideoChatComponent implements OnInit, OnDestroy {
-  @ViewChild('localVideo') localVideo!: ElementRef<HTMLVideoElement>;
-  @ViewChild('remoteVideo') remoteVideo!: ElementRef<HTMLVideoElement>;
+  @ViewChild('localVideo') localVideoRef!: ElementRef;
+  @ViewChild('remoteVideo') remoteVideoRef!: ElementRef;
 
   private peer!: Peer;
-  private localStream: MediaStream | undefined; // Initialize as undefined
-  private remoteStream: MediaStream | undefined; // Initialize as undefined
-  private peerId!: string; // Use "!" to indicate it will be initialized later
+  private localStream!: MediaStream;
+  private remoteStream!: MediaStream;
+  private mediaConnection!: MediaConnection;
 
-  constructor() {}
+  constructor() { }
 
   ngOnInit(): void {
     this.peer = new Peer();
 
     this.peer.on('open', (id) => {
-      this.peerId = id;
+      console.log('My peer ID is: ' + id);
     });
 
-    // Rest of your code...
-  }
-
-  startCall() {
-    navigator.mediaDevices
-      .getUserMedia({ video: true, audio: true })
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       .then((stream) => {
-        this.localStream = stream; // Assign the local stream here
-        this.localVideo.nativeElement.srcObject = stream;
-
-        // Continue with your call setup
-        const remotePeerId = prompt('Enter the peer ID of the person you want to call:');
-        if (remotePeerId) {
-          const call = this.peer.call(remotePeerId, stream);
-
-          call.on('stream', (remoteStream) => {
-            this.remoteStream = remoteStream;
-            this.remoteVideo.nativeElement.srcObject = remoteStream;
-          });
-        }
+        this.localStream = stream;
+        this.localVideoRef.nativeElement.srcObject = stream;
       })
       .catch((error) => {
-        console.error('Error accessing camera and microphone:', error);
+        console.error('Error accessing camera and microphone: ' + error);
       });
-  }
 
-  endCall() {
-    if (this.localStream) {
-      this.localStream.getTracks().forEach((track) => track.stop());
-    }
-    if (this.remoteStream) {
-      this.remoteStream.getTracks().forEach((track) => track.stop());
-    }
+    this.peer.on('call', (call) => {
+      call.answer(this.localStream);
+      this.mediaConnection = call;
+      call.on('stream', (remoteStream) => {
+        this.remoteStream = remoteStream;
+        this.remoteVideoRef.nativeElement.srcObject = remoteStream;
+      });
+    });
   }
 
   ngOnDestroy(): void {
-    this.endCall();
-    this.peer.destroy();
+    if (this.mediaConnection) {
+      this.mediaConnection.close();
+    }
+    if (this.localStream) {
+      this.localStream.getTracks().forEach((track) => {
+        track.stop();
+      });
+    }
+  }
+
+  startCall(): void {
+    const remotePeerId = prompt('Enter the remote peer ID:');
+    if (remotePeerId) {
+      const call = this.peer.call(remotePeerId, this.localStream);
+      call.on('stream', (remoteStream) => {
+        this.remoteStream = remoteStream;
+        this.remoteVideoRef.nativeElement.srcObject = remoteStream;
+      });
+    }
+  }
+
+  endCall(): void {
+    if (this.mediaConnection) {
+      this.mediaConnection.close();
+    }
+    if (this.localStream) {
+      this.localStream.getTracks().forEach((track) => {
+        track.stop();
+      });
+    }
+    this.remoteVideoRef.nativeElement.srcObject = null;
   }
 }
